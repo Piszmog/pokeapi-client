@@ -43,6 +43,14 @@ func GetPokemon(writer http.ResponseWriter, request *http.Request, params httpro
 		}
 		bytes, _ := json.Marshal(errorResponse)
 		writer.Write(bytes)
+	} else if pokemon.Id == 0 {
+		writer.WriteHeader(404)
+		errorResponse := errorResponse{
+			Path:         "/pokemon/" + identifier,
+			ErrorMessage: "Failed to find pokemon " + identifier,
+		}
+		bytes, _ := json.Marshal(errorResponse)
+		writer.Write(bytes)
 	} else {
 		writer.WriteHeader(200)
 		bytes, _ := json.Marshal(pokemon)
