@@ -25,6 +25,11 @@ var pokemonCacheClient *cache.RedisClient
 func main() {
 	apiClient = net.CreateDefaultApiClient()
 	pokemonCacheClient = cache.CreateLocalRedisClient("pokemon")
+	defer pokemonCacheClient.Close()
+	err := pokemonCacheClient.SetTTL(120)
+	if err != nil {
+		panic(err)
+	}
 	router := httprouter.New()
 	router.GET("/pokemon", GetPokemon)
 	log.Fatal(http.ListenAndServe(":8080", router))
