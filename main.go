@@ -6,7 +6,7 @@ import (
 )
 
 func main() {
-	client := net.CreateDefaultHttpClient()
+	client := net.CreateDefaultApiClient()
 	pokemon, err := client.GetPokemonById(1)
 	if err != nil {
 		panic(err)
