@@ -1,5 +1,7 @@
 package client
 
+import "encoding/json"
+
 type Pokemon struct {
 	Id                            int         `json:"id"`
 	Name                          string      `json:"name"`
@@ -72,6 +74,14 @@ type SpriteUrls struct {
 type Type struct {
 	Slot int     `json:"slot"`
 	Type Details `json:"type"`
+}
+
+func (pokemon Pokemon) MarshalBinary() ([]byte, error) {
+	return json.Marshal(pokemon)
+}
+
+func (pokemon Pokemon) UnmarshalBinary(bytes []byte) error {
+	return json.Unmarshal(bytes, pokemon)
 }
 
 type Client interface {
