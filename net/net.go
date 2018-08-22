@@ -6,44 +6,30 @@ import (
 	"github.com/pkg/errors"
 	"net"
 	"net/http"
-	"strconv"
 	"time"
 )
 
-const urlBase = "http://pokeapi.co/api/v2/"
-const pokemonUrlPath = "pokemon/"
+const (
+	urlBase        = "http://pokeapi.co/api/v2/"
+	pokemonUrlPath = "pokemon/"
+)
 
 type ApiClient struct {
 	baseUrl    string
 	httpClient *http.Client
 }
 
-func (apiClient ApiClient) GetPokemonById(id int) (*client.Pokemon, error) {
-	resp, err := apiClient.httpClient.Get(apiClient.baseUrl + pokemonUrlPath + strconv.Itoa(id))
+func (apiClient ApiClient) GetPokemon(identifier string) (*client.Pokemon, error) {
+	resp, err := apiClient.httpClient.Get(apiClient.baseUrl + pokemonUrlPath + identifier)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to retrieve details on pokemon %d", id)
+		return nil, errors.Wrapf(err, "failed to retrieve details on pokemon %d", identifier)
 	}
 	defer resp.Body.Close()
 	pokemon := &client.Pokemon{}
 	decoder := json.NewDecoder(resp.Body)
 	err = decoder.Decode(pokemon)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to decode response for pokemon %d", id)
-	}
-	return pokemon, nil
-}
-
-func (apiClient ApiClient) GetPokemonByName(name string) (*client.Pokemon, error) {
-	resp, err := apiClient.httpClient.Get(urlBase + "pokemon/" + name)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to retrieve details on pokemon %s", name)
-	}
-	defer resp.Body.Close()
-	pokemon := &client.Pokemon{}
-	decoder := json.NewDecoder(resp.Body)
-	err = decoder.Decode(pokemon)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to decode response for pokemon %s", name)
+		return nil, errors.Wrapf(err, "failed to decode response for pokemon %d", identifier)
 	}
 	return pokemon, nil
 }

@@ -75,6 +75,5 @@ type Type struct {
 }
 
 type Client interface {
-	GetPokemonById(id int) (*Pokemon, error)
-	GetPokemonByName(name string) (*Pokemon, error)
+	GetPokemon(identifier string) (*Pokemon, error)
 }
