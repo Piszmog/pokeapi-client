@@ -16,7 +16,6 @@ const (
 var client *net.ApiClient
 
 type errorResponse struct {
-	Path         string `json:"path"`
 	ErrorMessage string `json:"error_message"`
 }
 
@@ -38,7 +37,6 @@ func GetPokemon(writer http.ResponseWriter, request *http.Request, params httpro
 	if err != nil {
 		writer.WriteHeader(500)
 		errorResponse := errorResponse{
-			Path:         "/pokemon/" + identifier,
 			ErrorMessage: err.Error(),
 		}
 		bytes, _ := json.Marshal(errorResponse)
@@ -46,7 +44,6 @@ func GetPokemon(writer http.ResponseWriter, request *http.Request, params httpro
 	} else if pokemon.Id == 0 {
 		writer.WriteHeader(404)
 		errorResponse := errorResponse{
-			Path:         "/pokemon/" + identifier,
 			ErrorMessage: "Failed to find pokemon " + identifier,
 		}
 		bytes, _ := json.Marshal(errorResponse)
