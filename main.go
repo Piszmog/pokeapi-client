@@ -11,5 +11,10 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	fmt.Printf("%+v\n", pokemon)
+	pokemon, err = client.GetPokemonByName("pikachu")
+	if err != nil {
+		panic(err)
+	}
 	fmt.Printf("%+v", pokemon)
 }
