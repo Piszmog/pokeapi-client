@@ -11,6 +11,7 @@ import (
 )
 
 const urlBase = "http://pokeapi.co/api/v2/"
+const pokemonUrlPath = "pokemon/"
 
 type ApiClient struct {
 	baseUrl    string
@@ -18,7 +19,7 @@ type ApiClient struct {
 }
 
 func (apiClient ApiClient) GetPokemonById(id int) (*client.Pokemon, error) {
-	resp, err := apiClient.httpClient.Get(apiClient.baseUrl + "pokemon/" + strconv.Itoa(id))
+	resp, err := apiClient.httpClient.Get(apiClient.baseUrl + pokemonUrlPath + strconv.Itoa(id))
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to retrieve details on pokemon %d", id)
 	}
