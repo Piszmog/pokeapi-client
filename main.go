@@ -13,7 +13,7 @@ import (
 const (
 	keyContentType       = "Content-Type"
 	valueApplicationJson = "application/json"
-	defaultCacheTTL      = 120
+	defaultCacheTTL      = 3600
 )
 
 type errorResponse struct {
