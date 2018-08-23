@@ -4,15 +4,14 @@ import (
 	"encoding/json"
 	"github.com/go-redis/redis"
 	"github.com/pkg/errors"
+	"time"
 )
 
 type Client interface {
 	Insert(id string, object interface{}) error
 	Get(id string, interfaceType interface{}) error
-	GetAll() (map[string]string, error)
 	Remove(id string) error
-	RemoveAll() error
-	SetTTL(seconds int) error
+	SetTTL(id string, seconds int) error
 	Close()
 }
 
@@ -38,7 +37,7 @@ func CreateRedisClient(host string, port string, password string, key string) *R
 }
 
 func (redisClient RedisClient) Insert(id string, object interface{}) error {
-	err := redisClient.client.HSet(redisClient.key, id, object).Err()
+	err := redisClient.client.HSet(buildKey(redisClient.key, id), id, object).Err()
 	if err != nil {
 		errors.Wrapf(err, "failed to insert %s to %s", id, redisClient.key)
 	}
@@ -46,7 +45,7 @@ func (redisClient RedisClient) Insert(id string, object interface{}) error {
 }
 
 func (redisClient RedisClient) Get(id string, interfaceType interface{}) error {
-	bytes, err := redisClient.client.HGet(redisClient.key, id).Bytes()
+	bytes, err := redisClient.client.HGet(buildKey(redisClient.key, id), id).Bytes()
 	if err != nil {
 		// error occurs if record cannot be found
 		return nil
@@ -58,30 +57,26 @@ func (redisClient RedisClient) Get(id string, interfaceType interface{}) error {
 	return nil
 }
 
-func (redisClient RedisClient) GetAll() (map[string]string, error) {
-	stringResults, err := redisClient.client.HGetAll(redisClient.key).Result()
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to retrieve all entries in key %s", redisClient.key)
-	}
-	return stringResults, nil
-}
-
 func (redisClient RedisClient) Remove(id string) error {
-	err := redisClient.client.HDel(redisClient.key, id).Err()
+	err := redisClient.client.HDel(buildKey(redisClient.key, id), id).Err()
 	if err != nil {
 		return errors.Wrapf(err, "failed to remove %s from %s", id, redisClient.key)
 	}
 	return nil
 }
 
-func (redisClient RedisClient) RemoveAll() error {
-	err := redisClient.client.Del(redisClient.key).Err()
+func (redisClient RedisClient) Close() {
+	redisClient.client.Close()
+}
+
+func (redisClient RedisClient) SetTTL(id string, seconds int) error {
+	err := redisClient.client.Expire(buildKey(redisClient.key, id), time.Duration(seconds)*time.Second).Err()
 	if err != nil {
-		errors.Wrapf(err, "failed to remove all from %s", redisClient.key)
+		return errors.Wrapf(err, "failed to set the till on %s to %d seconds", id, seconds)
 	}
 	return nil
 }
 
-func (redisClient RedisClient) Close() {
-	redisClient.client.Close()
+func buildKey(key, id string) string {
+	return key + "." + id
 }

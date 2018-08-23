@@ -13,6 +13,7 @@ import (
 const (
 	keyContentType       = "Content-Type"
 	valueApplicationJson = "application/json"
+	defaultCacheTTL      = 120
 )
 
 type errorResponse struct {
@@ -50,7 +51,7 @@ func GetPokemon(writer http.ResponseWriter, request *http.Request, params httpro
 		return
 	}
 	if pokemon.Id == 0 {
-		pokemon, err := apiClient.GetPokemon(identifier)
+		serverPokemon, err := apiClient.GetPokemon(identifier)
 		if err != nil {
 			writer.WriteHeader(500)
 			errorResponse := errorResponse{
@@ -59,7 +60,7 @@ func GetPokemon(writer http.ResponseWriter, request *http.Request, params httpro
 			bytes, _ := json.Marshal(errorResponse)
 			writer.Write(bytes)
 			return
-		} else if pokemon.Id == 0 {
+		} else if serverPokemon.Id == 0 {
 			writer.WriteHeader(404)
 			errorResponse := errorResponse{
 				ErrorMessage: "Failed to find pokemon " + identifier,
@@ -68,8 +69,10 @@ func GetPokemon(writer http.ResponseWriter, request *http.Request, params httpro
 			writer.Write(bytes)
 			return
 		}
-		pokemonCacheClient.Insert(identifier, pokemon)
+		pokemonCacheClient.Insert(identifier, serverPokemon)
+		pokemon = *serverPokemon
 	}
+	pokemonCacheClient.SetTTL(identifier, defaultCacheTTL)
 	writer.WriteHeader(200)
 	bytes, _ := json.Marshal(pokemon)
 	writer.Write(bytes)
