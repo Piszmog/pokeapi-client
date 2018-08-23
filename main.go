@@ -26,16 +26,13 @@ func main() {
 	apiClient = net.CreateDefaultApiClient()
 	pokemonCacheClient = cache.CreateLocalRedisClient("pokemon")
 	defer pokemonCacheClient.Close()
-	err := pokemonCacheClient.SetTTL(120)
-	if err != nil {
-		panic(err)
-	}
 	router := httprouter.New()
 	router.GET("/pokemon", GetPokemon)
 	log.Fatal(http.ListenAndServe(":8080", router))
 }
 
 func GetPokemon(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	writer.Header().Set(keyContentType, valueApplicationJson)
 	query := request.URL.Query()
 	identifier := query.Get("id")
 	if len(identifier) == 0 {
@@ -43,7 +40,6 @@ func GetPokemon(writer http.ResponseWriter, request *http.Request, params httpro
 	}
 	var pokemon client.Pokemon
 	err := pokemonCacheClient.Get(identifier, &pokemon)
-	writer.Header().Set(keyContentType, valueApplicationJson)
 	if err != nil {
 		writer.WriteHeader(500)
 		errorResponse := errorResponse{
@@ -54,7 +50,7 @@ func GetPokemon(writer http.ResponseWriter, request *http.Request, params httpro
 		return
 	}
 	if pokemon.Id == 0 {
-		serverPokemon, err := apiClient.GetPokemon(identifier)
+		pokemon, err := apiClient.GetPokemon(identifier)
 		if err != nil {
 			writer.WriteHeader(500)
 			errorResponse := errorResponse{
@@ -63,7 +59,7 @@ func GetPokemon(writer http.ResponseWriter, request *http.Request, params httpro
 			bytes, _ := json.Marshal(errorResponse)
 			writer.Write(bytes)
 			return
-		} else if serverPokemon.Id == 0 {
+		} else if pokemon.Id == 0 {
 			writer.WriteHeader(404)
 			errorResponse := errorResponse{
 				ErrorMessage: "Failed to find pokemon " + identifier,
@@ -72,7 +68,6 @@ func GetPokemon(writer http.ResponseWriter, request *http.Request, params httpro
 			writer.Write(bytes)
 			return
 		}
-		pokemon = *serverPokemon
 		pokemonCacheClient.Insert(identifier, pokemon)
 	}
 	writer.WriteHeader(200)

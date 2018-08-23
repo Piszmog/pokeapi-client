@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"github.com/go-redis/redis"
 	"github.com/pkg/errors"
-	"time"
 )
 
 type Client interface {
@@ -47,8 +46,12 @@ func (redisClient RedisClient) Insert(id string, object interface{}) error {
 }
 
 func (redisClient RedisClient) Get(id string, interfaceType interface{}) error {
-	bytes, _ := redisClient.client.HGet(redisClient.key, id).Bytes()
-	err := json.Unmarshal(bytes, interfaceType)
+	bytes, err := redisClient.client.HGet(redisClient.key, id).Bytes()
+	if err != nil {
+		// error occurs if record cannot be found
+		return nil
+	}
+	err = json.Unmarshal(bytes, interfaceType)
 	if err != nil {
 		return errors.Wrapf(err, "failed to unmarshal %s", id)
 	}
@@ -81,12 +84,4 @@ func (redisClient RedisClient) RemoveAll() error {
 
 func (redisClient RedisClient) Close() {
 	redisClient.client.Close()
-}
-
-func (redisClient RedisClient) SetTTL(seconds int) error {
-	err := redisClient.client.PExpire(redisClient.key, time.Duration(seconds)*time.Second).Err()
-	if err != nil {
-		return errors.Wrapf(err, "failed to set the till on %s to %d seconds", redisClient.key, seconds)
-	}
-	return nil
 }
